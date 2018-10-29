@@ -14,20 +14,11 @@
         </div>
         <button class="btn btn-primary" type="submit">Deposit</button>
     </form>
-    <script>
-        var form = document.getElementById("deposit");
-        form.onsubmit = function() {
-            if(!form.credit_number.value)
-            {
-                alert("Missing credit card number!");
-                return false;
-            }
-            if(!form.new_money.value)
-            {
-                alert("Enter money to be deposited!");
-                return false;
-            }
-            return true;
-        }
-    </script>
+
+    <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+    <!-- App's own JavaScript -->
+    <script src="/static/deposit.js"></script>
+
 {% endblock %}

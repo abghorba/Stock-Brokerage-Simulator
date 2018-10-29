@@ -14,26 +14,10 @@
         </div>
         <button class="btn btn-primary" type="submit">Buy</button>
     </form>
-    <script>
-        var form = document.getElementById("buy");
-        form.onsubmit = function() {
-            if (!form.symbol.value)
-            {
-                alert("Missing symbol!");
-                return false;
-            }
-            else if (!form.shares.value)
-            {
-                alert("Enter shares!");
-                return false;
-            }
-            else if(form.shares.value <= 0)
-            {
-                alert("Shares must be a positive integer!");
-                return false;
-            }
-            return true;
 
-        }
-    </script>
+    <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+    <!-- App's own JavaScript -->
+    <script src="/static/buy.js"></script>
 {% endblock %}

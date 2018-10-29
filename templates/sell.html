@@ -19,20 +19,10 @@
         </div>
         <button class="btn btn-primary" type="submit">Sell</button>
     </form>
-    <script>
-        var form = document.getElementById("sell");
-        form.onsubmit = function() {
-            if(!form.symbol.value)
-            {
-                alert("Select symbol!");
-                return false;
-            }
-            if(!form.shares.value)
-            {
-                alert("Enter shares!");
-                return false;
-            }
-            return true;
-        }
-    </script>
+
+    <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+    <!-- App's own JavaScript -->
+    <script src="/static/sell.js"></script>
 {% endblock %}

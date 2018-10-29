@@ -5,6 +5,7 @@
 {% endblock %}
 
 {% block main %}
+
     <form action="/login" id="login" method="post">
         <div class="form-group">
             <input autocomplete="off" autofocus class="form-control" name="username" placeholder="Username" type="text"/>
@@ -16,20 +17,11 @@
         <a class="nav-link" href="/password-reset">Forgot Password?</a>
     </form>
 
-    <script>
-        var form = document.getElementById("login")
-        form.onsubmit = function() {
-            if (!form.username.value)
-            {
-                alert("Missing username!");
-                return false;
-            }
-            else if (!form.password.value)
-            {
-                alert("Missing password!");
-                return false;
-            }
-            return true;
-        }
-    </script>
+
+    <!-- jQuery library -->
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+
+    <!-- App's own JavaScript -->
+    <script src="/scripts/login.js"></script>
+
 {% endblock %}
