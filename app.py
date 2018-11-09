@@ -1,6 +1,7 @@
 import os
+import mysql.connector
 
-from cs50 import SQL
+from decimal import Decimal
 from flask import Flask, flash, redirect, render_template, request, session
 from flask_session import Session
 from tempfile import mkdtemp
@@ -34,15 +35,23 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-# Configure CS50 Library to use SQLite database
-db = SQL("sqlite:///finance.db")
+# Connect to MySQL database
+db = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    passwd="1a2b3c4d$",
+    database="finance",
+    auth_plugin='mysql_native_password'
+)
+cursor = db.cursor(dictionary=True)
 
 
 @app.route("/")
 @login_required
 def index():
     """Shows user's portfolio"""
-    user_stocks = db.execute("SELECT * FROM portfolio WHERE id=:id", id=session["user_id"])
+    cursor.execute("SELECT * FROM portfolio WHERE id=%s", (session["user_id"],))
+    user_stocks = cursor.fetchall()
 
     stock_holdings = 0
 
@@ -54,22 +63,41 @@ def index():
         share_price = stock_info["price"]
         total_price = stock_shares * share_price
         stock_holdings += total_price
-        db.execute("UPDATE portfolio SET price=:price, total=:total WHERE id=:id AND symbol=:symbol",
-                   price=usd(share_price), total=usd(total_price), id=session["user_id"], symbol=stock_symbol)
+        cursor.execute(
+            "UPDATE portfolio SET price=%s, total=%s WHERE id=%s AND symbol=%s", 
+            (share_price, total_price, session["user_id"], stock_symbol)
+        )
+        db.commit()
 
     # Get user's available cash
-    available_cash = db.execute("SELECT cash FROM users WHERE id=:id", id=session["user_id"])
+    cursor.execute(
+        "SELECT cash FROM users WHERE id=%s", 
+        (session["user_id"],)
+    )
+    available_cash = cursor.fetchone()
 
     # Add user's available cash to total holdings
-    grand_total = available_cash[0]["cash"] + stock_holdings
+    grand_total = available_cash["cash"] + Decimal(stock_holdings)
 
     # If shares are equal to 0 then delete from portfolio
-    db.execute("DELETE FROM portfolio WHERE id=:id and shares = 0", id=session["user_id"])
+    cursor.execute(
+        "DELETE FROM portfolio WHERE id=%s AND shares=0", 
+        (session["user_id"],)
+    )
 
     # Get current portfolio
-    current_portfolio = db.execute("SELECT * FROM portfolio WHERE id=:id ORDER BY symbol", id=session["user_id"])
+    cursor.execute(
+        "SELECT * FROM portfolio WHERE id=%s ORDER BY symbol", 
+        (session["user_id"],)
+    )
+    current_portfolio = cursor.fetchall()
 
-    return render_template("index.html", stocks=current_portfolio, user_cash=usd(available_cash[0]["cash"]), grand_total=usd(grand_total))
+    return render_template(
+        "index.html", 
+        stocks=current_portfolio, 
+        user_cash=usd(available_cash["cash"]), 
+        grand_total=usd(grand_total)
+    )
 
 
 @app.route("/buy", methods=["GET", "POST"])
@@ -94,38 +122,56 @@ def buy():
         share_price = float(stock_info["price"])
 
         # Get user's cash
-        available_cash = db.execute("SELECT cash FROM users WHERE id=:id", id=session["user_id"])
+        cursor.execute(
+            "SELECT cash FROM users WHERE id=%s", 
+            (session["user_id"],)
+        )
+        available_cash = cursor.fetchone()
 
         # Variable for the total purchase price
         purchase_price = share_price * shares_buying
 
         # Check if user can afford the shares
-        if not available_cash or float(available_cash[0]["cash"]) < purchase_price:
+        if not available_cash or float(available_cash["cash"]) < purchase_price:
             return apology("not enough cash available")
 
         # Update user's history
-        db.execute("INSERT INTO history (id, symbol, transactions, price) \
-                    VALUES (:id, :symbol, :transactions, :price)",
-                   id=session["user_id"], symbol=symbol_buying,
-                   transactions=shares_buying, price=share_price)
+        cursor.execute(
+            "INSERT INTO history (id, symbol, transactions, price) VALUES (%s, %s, %s, %s)", 
+            (session["user_id"], symbol_buying, shares_buying, share_price)
+        )
+        db.commit()
 
         # Check if user already owns shares from a company
-        has_shares = db.execute("SELECT shares FROM portfolio WHERE id=:id AND symbol=:symbol",
-                                id=session["user_id"], symbol=symbol_buying)
+        cursor.execute(
+            "SELECT shares FROM portfolio WHERE id=%s AND symbol=%s", 
+             (session["user_id"], symbol_buying)
+        )
+        has_shares = cursor.fetchall()
 
         # If user doesn't have shares from a company, insert into portfolio
         if not has_shares:
-            db.execute("INSERT INTO portfolio (id, symbol, name, shares, price, total) \
-                        VALUES (:id, :symbol, :name, :shares, :price, :total)",
-                       id=session["user_id"], symbol=symbol_buying, name=stock_info["name"],
-                       shares=shares_buying, price=share_price, total=purchase_price)
+            cursor.execute(
+                "INSERT INTO portfolio (id, symbol, name_, shares, price, total) \
+                VALUES (%s, %s, %s, %s, %s, %s)",
+                (session["user_id"], symbol_buying, stock_info["name"], shares_buying, share_price, purchase_price)
+            )
+            db.commit()
+                
         # If user does have shares from the company, update portfolio
         else:
-            db.execute("UPDATE portfolio SET shares=shares+:add_shares WHERE id=:id",
-                       add_shares=shares_buying, id=session["user_id"])
+            cursor.execute(
+                "UPDATE portfolio SET shares=shares+%s WHERE id=%s", 
+                (shares_buying, session["user_id"])
+            )
+            db.commit()
 
         # Update user's available cash
-        db.execute("UPDATE users SET cash=cash-:purchase WHERE id=:id", purchase=purchase_price, id=session["user_id"])
+        cursor.execute(
+            "UPDATE users SET cash=cash-%s WHERE id=%s", 
+            (purchase_price, session["user_id"])
+        )
+        db.commit()
 
         # Redirect user to home page
         flash("Bought successfully!")
@@ -142,7 +188,11 @@ def history():
     """Show history of transactions"""
 
     # Get user's history
-    user_history = db.execute("SELECT * FROM history WHERE id=:id ORDER BY time", id=session["user_id"])
+    cursor.execute(
+        "SELECT * FROM history WHERE id=%s ORDER BY time_", 
+        (session["user_id"],) 
+    )
+    user_history = cursor.fetchall()
 
     return render_template("history.html", histories=user_history)
 
@@ -158,15 +208,18 @@ def login():
     if request.method == "POST":
 
         # Query database for username
-        rows = db.execute("SELECT * FROM users WHERE username=:username",
-                          username=request.form.get("username"))
+        cursor.execute(
+            "SELECT * FROM users WHERE username=%s",
+            (request.form.get("username"),)
+        )
+        row = cursor.fetchone()
 
         # Ensure username exists and password is correct
-        if len(rows) != 1 or not check_password_hash(rows[0]["hash"], request.form.get("password")):
+        if not row or not check_password_hash(row["hash_"], request.form.get("password")):
             return apology("invalid username and/or password", 403)
 
         # Remember which user has logged in
-        session["user_id"] = rows[0]["id"]
+        session["user_id"] = row["id"]
 
         # Redirect user to home page
         flash("Login successful!")
@@ -219,16 +272,17 @@ def register():
     if request.method == "POST":
 
         # Add registered user into database
-        new_user = db.execute("INSERT INTO users (username, hash, keyword) VALUES (:username, :hash, :keyword)",
-                              username=request.form.get("username"), hash=generate_password_hash(request.form.get("password")),
-                              keyword=request.form.get("keyword"))
-
-        # Check the username is unique
-        if not new_user:
+        try:
+            cursor.execute(
+                "INSERT INTO users (username, hash_, keyword) VALUES (%s, %s, %s)",
+                    (request.form.get("username"), generate_password_hash(request.form.get("password")), request.form.get("keyword"))
+            )
+            db.commit()
+        except:
             return apology("Username already exists")
 
         # Remember which user has logged in
-        session["user_id"] = new_user
+        session["user_id"] = cursor.lastrowid
 
         # Redirect user to home page
         flash("Registered successfully!")
@@ -244,7 +298,12 @@ def register():
 def sell():
     """Sell shares of stock"""
 
-    user_stocks = db.execute("SELECT * FROM portfolio WHERE id=:id", id=session["user_id"])
+    # Query database for user's stocks
+    cursor.execute(
+        "SELECT * FROM portfolio WHERE id=%s", 
+        (session["user_id"],)
+    )
+    user_stocks = cursor.fetchall()
 
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
@@ -256,11 +315,14 @@ def sell():
         shares_selling = int(request.form.get("shares"))
 
         # Get number of shares user owns
-        user_shares = db.execute("SELECT shares FROM portfolio WHERE id=:id AND symbol=:symbol",
-                                 id=session["user_id"], symbol=stock_info["symbol"])
+        cursor.execute(
+            "SELECT shares FROM portfolio WHERE id=%s AND symbol=%s",
+            (session["user_id"], stock_info["symbol"])
+        )
+        user_shares = cursor.fetchone()
 
         # Check if user has enough shares to sell
-        if user_shares[0]["shares"] < shares_selling:
+        if user_shares["shares"] < shares_selling:
             return apology("you don't own enough shares")
 
         # Variable for price of the share
@@ -270,19 +332,25 @@ def sell():
         sale_price = shares_selling * share_price
 
         # Update user's history to show a sell transaction
-        db.execute("INSERT INTO history (id, symbol, transactions, price) \
-                    VALUES (:id, :symbol, :transactions, :price)",
-                   id=session["user_id"], symbol=stock_info["symbol"],
-                   transactions=-shares_selling, price=share_price)
+        cursor.execute(
+            "INSERT INTO history (id, symbol, transactions, price) VALUES (%s, %s, %s, %s)",
+            (session["user_id"], stock_info["symbol"], -shares_selling, share_price)
+        )
+        db.commit()
 
         # Update user's portfolio by deleting shares sold
-        db.execute("UPDATE portfolio SET shares=shares-:shares_sold, total=total-:sale \
-                    WHERE id=:id AND symbol=:symbol",
-                   shares_sold=shares_selling, sale=sale_price,
-                   id=session["user_id"], symbol=stock_info["symbol"])
+        cursor.execute(
+            "UPDATE portfolio SET shares=shares-%s, total=total-%s WHERE id=%s AND symbol=%s",
+            (shares_selling, sale_price, session["user_id"], stock_info["symbol"])
+        )
+        db.commit()
 
         # Update user's available cash
-        db.execute("UPDATE users SET cash=cash+:sale WHERE id=:id", sale=sale_price, id=session["user_id"])
+        cursor.execute(
+            "UPDATE users SET cash=cash+%s WHERE id=%s",
+            (sale_price, session["user_id"])
+        )
+        db.commit()
 
         # Redirect user to home page
         flash("Sold successfully!")
@@ -308,8 +376,12 @@ def deposit():
         if not cc_number or credit_card(int(cc_number)) == "INVALID":
             return apology("Invalid credit card number")
 
-        # Add new money to user's available cash
-        db.execute("UPDATE users SET cash=cash+:money WHERE id=:id", money=new_money, id=session["user_id"])
+        # Add new money to user's available cash      
+        cursor.execute(
+            "UPDATE users SET cash=cash+%s WHERE id=%s",
+            (new_money, session["user_id"])
+        )
+        db.commit()
 
         # Redirect user to home page
         flash("Deposited money successfully with your " + credit_card(int(cc_number)) + " credit card!")
@@ -325,17 +397,22 @@ def passwordreset():
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
 
-        # Query database for username and keyword
-        rows = db.execute("SELECT * FROM users WHERE username=:user AND keyword=:keyword",
-                          user=request.form.get("username"), keyword=request.form.get("keyword"))
+        # Query database for username and keyword       
+        cursor.execute(
+            "SELECT * FROM users WHERE username=%s AND keyword=%s",
+            (request.form.get("username"), request.form.get("keyword"))
+        )
 
         # Ensure username/keyword combination exists
-        if len(rows) != 1:
+        if not cursor.fetchone():
             return apology("Username/Keyword combination invalid")
 
         # Update user's new password
-        db.execute("UPDATE users SET hash=:newhash WHERE username=:user",
-                   newhash=generate_password_hash(request.form.get("new_password")), user=request.form.get("username"))
+        cursor.execute(
+            "UPDATE users SET hash_=%s WHERE username=%s",
+            (generate_password_hash(request.form.get("new_password")), request.form.get("username"))
+        )
+        db.commit()
 
         # Redirect user to home page
         return redirect("/password-reset-success")
@@ -344,16 +421,13 @@ def passwordreset():
         return render_template("password-reset.html")
 
 
-
 @app.route("/password-reset-success")
 def resetsuccess():
     return render_template("password-reset-success.html")
 
-
 def errorhandler(e):
     """Handle error"""
     return apology(e.name, e.code)
-
 
 # listen for errors
 for code in default_exceptions:
