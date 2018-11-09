@@ -1,4 +1,6 @@
-cs50
-Flask
-Flask-Session
-requests
+requests==2.20.0
+Flask_Session==0.3.1
+Flask==1.0.2
+mysql-connector==2.1.6 
+mysql-connector-python==8.0.13
+Werkzeug==0.14.1
