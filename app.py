@@ -37,11 +37,10 @@ Session(app)
 
 # Connect to MySQL database
 db = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    passwd="1a2b3c4d$",
-    database="finance",
-    auth_plugin='mysql_native_password'
+    host=DB_HOST,
+    user=DB_USER,
+    passwd=DB_PSWD,
+    database=DB_NAME,
 )
 cursor = db.cursor(dictionary=True)
 
