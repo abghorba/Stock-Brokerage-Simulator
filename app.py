@@ -38,9 +38,9 @@ Session(app)
 # Connect to MySQL database
 db = mysql.connector.connect(
     host='us-cdbr-iron-east-01.cleardb.net',
-    user='b94ae35fff0b20',
-    passwd='0514e475',
-    database='heroku_4a4f9f0cf4a0f69',
+    user='b84fb0a554023e',
+    passwd='557fd839',
+    database='heroku_68bf6f1d8c706bd',
 )
 cursor = db.cursor(dictionary=True)
 
