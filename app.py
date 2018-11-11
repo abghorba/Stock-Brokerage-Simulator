@@ -12,7 +12,7 @@ from helpers import apology, login_required, lookup, usd, credit_card
 
 # Configure application
 app = Flask(__name__)
-app.secret_key = os.urandom(24)
+app.secret_key = '6\xfd\xa0\x91+\x95)\xbb\xb3\xf2\xb4\x8b\xc1W\xb0\xabDDQ\x9f\x93\x0b\x01\xbc'
 
 # Ensure templates are auto-reloaded
 app.config["TEMPLATES_AUTO_RELOAD"] = True
