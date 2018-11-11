@@ -12,7 +12,7 @@ from helpers import apology, login_required, lookup, usd, credit_card
 
 # Configure application
 app = Flask(__name__)
-app.secret_key = '6\xfd\xa0\x91+\x95)\xbb\xb3\xf2\xb4\x8b\xc1W\xb0\xabDDQ\x9f\x93\x0b\x01\xbc'
+app.secret_key = SECRET_KEY
 
 # Ensure templates are auto-reloaded
 app.config["TEMPLATES_AUTO_RELOAD"] = True
@@ -30,19 +30,12 @@ def after_request(response):
 # Custom filter
 app.jinja_env.filters["usd"] = usd
 
-# Configure session to use filesystem (instead of signed cookies)
-# app.config["SESSION_FILE_DIR"] = mkdtemp()
-# app.config["SESSION_PERMANENT"] = False
-# app.config["SESSION_TYPE"] = "filesystem"
-# app.config["SECRET_KEY"] = '6\xfd\xa0\x91+\x95)\xbb\xb3\xf2\xb4\x8b\xc1W\xb0\xabDDQ\x9f\x93\x0b\x01\xbc'
-# Session(app)
-
 # Connect to MySQL database
 db = mysql.connector.connect(
-    host='z12itfj4c1vgopf8.cbetxkdyhwsb.us-east-1.rds.amazonaws.com',
-    user='m6rid0typuok2c9i',
-    passwd='ypsn0q4dt5g0x4lj',
-    database='k1dlt3okuo8wlfhd',
+    host=DB_HOST,
+    user=DB_USER,
+    passwd=DB_PASSWORD,
+    database=DB_NAME,
 )
 cursor = db.cursor(dictionary=True)
 
