@@ -12,15 +12,15 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from helpers import apology, login_required, lookup, usd, credit_card
 
 # Configure application
-app = Flask(__name__)
-app.secret_key = SecretKey.SECRET_KEY
+application = Flask(__name__)
+application.secret_key = SecretKey.SECRET_KEY
 
 # Ensure templates are auto-reloaded
-app.config["TEMPLATES_AUTO_RELOAD"] = True
+application.config["TEMPLATES_AUTO_RELOAD"] = True
 
 
 # Ensure responses aren't cached
-@app.after_request
+@application.after_request
 def after_request(response):
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Expires"] = 0
@@ -29,7 +29,7 @@ def after_request(response):
 
 
 # Custom filter
-app.jinja_env.filters["usd"] = usd
+application.jinja_env.filters["usd"] = usd
 
 # Connect to MySQL database
 db = mysql.connector.connect(
@@ -41,7 +41,7 @@ db = mysql.connector.connect(
 cursor = db.cursor(dictionary=True)
 
 
-@app.route("/")
+@application.route("/")
 @login_required
 def index():
     """Shows user's portfolio"""
@@ -95,7 +95,7 @@ def index():
     )
 
 
-@app.route("/buy", methods=["GET", "POST"])
+@application.route("/buy", methods=["GET", "POST"])
 @login_required
 def buy():
     """Buy shares of stock"""
@@ -177,7 +177,7 @@ def buy():
         return render_template("buy.html")
 
 
-@app.route("/history")
+@application.route("/history")
 @login_required
 def history():
     """Show history of transactions"""
@@ -192,7 +192,7 @@ def history():
     return render_template("history.html", histories=user_history)
 
 
-@app.route("/login", methods=["GET", "POST"])
+@application.route("/login", methods=["GET", "POST"])
 def login():
     """Log user in"""
 
@@ -225,7 +225,7 @@ def login():
         return render_template("login.html")
 
 
-@app.route("/logout")
+@application.route("/logout")
 def logout():
     """Log user out"""
 
@@ -236,7 +236,7 @@ def logout():
     return redirect("/")
 
 
-@app.route("/quote", methods=["GET", "POST"])
+@application.route("/quote", methods=["GET", "POST"])
 @login_required
 def quote():
     """Get stock quote."""
@@ -259,7 +259,7 @@ def quote():
         return render_template("quote.html")
 
 
-@app.route("/register", methods=["GET", "POST"])
+@application.route("/register", methods=["GET", "POST"])
 def register():
     """Register user"""
 
@@ -288,7 +288,7 @@ def register():
         return render_template("register.html")
 
 
-@app.route("/sell", methods=["GET", "POST"])
+@application.route("/sell", methods=["GET", "POST"])
 @login_required
 def sell():
     """Sell shares of stock"""
@@ -356,7 +356,7 @@ def sell():
         return render_template("sell.html", stocks=user_stocks)
 
 
-@app.route("/deposit", methods=["GET", "POST"])
+@application.route("/deposit", methods=["GET", "POST"])
 @login_required
 def deposit():
     """Add more cash"""
@@ -386,7 +386,7 @@ def deposit():
         return render_template("deposit.html")
 
 
-@app.route("/password-reset", methods=["GET", "POST"])
+@application.route("/password-reset", methods=["GET", "POST"])
 def passwordreset():
     """Allow users to reset password"""
     # User reached route via POST (as by submitting a form via POST)
@@ -416,7 +416,7 @@ def passwordreset():
         return render_template("password-reset.html")
 
 
-@app.route("/password-reset-success")
+@application.route("/password-reset-success")
 def resetsuccess():
     return render_template("password-reset-success.html")
 
@@ -426,4 +426,4 @@ def errorhandler(e):
 
 # listen for errors
 for code in default_exceptions:
-    app.errorhandler(code)(errorhandler)
+    application.errorhandler(code)(errorhandler)
