@@ -168,7 +168,7 @@ def buy():
         db.commit()
 
         # Redirect user to home page
-        flash("Bought successfully!")
+        flash("Bought {} share(s) of {} successfully!".format(shares_buying, symbol_buying))
         return redirect("/")
 
     # User reached route via GET (as by clicking a link or via redirect)
@@ -305,13 +305,16 @@ def sell():
         # Look up stock information
         stock_info = lookup(request.form.get("symbol"))
 
+        # Variable for stock name
+        symbol_selling = stock_info["symbol"]
+
         # Variable for number of shares trying to sell
         shares_selling = int(request.form.get("shares"))
 
         # Get number of shares user owns
         cursor.execute(
             "SELECT shares FROM portfolio WHERE id=%s AND symbol=%s",
-            (session["user_id"], stock_info["symbol"])
+            (session["user_id"], symbol_selling)
         )
         user_shares = cursor.fetchone()
 
@@ -328,14 +331,14 @@ def sell():
         # Update user's history to show a sell transaction
         cursor.execute(
             "INSERT INTO history (id, symbol, transactions, price) VALUES (%s, %s, %s, %s)",
-            (session["user_id"], stock_info["symbol"], -shares_selling, share_price)
+            (session["user_id"], symbol_selling, -shares_selling, share_price)
         )
         db.commit()
 
         # Update user's portfolio by deleting shares sold
         cursor.execute(
             "UPDATE portfolio SET shares=shares-%s, total=total-%s WHERE id=%s AND symbol=%s",
-            (shares_selling, sale_price, session["user_id"], stock_info["symbol"])
+            (shares_selling, sale_price, session["user_id"], symbol_selling)
         )
         db.commit()
 
@@ -347,7 +350,7 @@ def sell():
         db.commit()
 
         # Redirect user to home page
-        flash("Sold successfully!")
+        flash("Sold {} share(s) of {} successfully!".format(shares_selling, symbol_selling))
         return redirect("/")
 
     # User reached route via GET (as by clicking a link or via redirect)
@@ -378,7 +381,7 @@ def deposit():
         db.commit()
 
         # Redirect user to home page
-        flash("Deposited money successfully with your " + credit_card(int(cc_number)) + " credit card!")
+        flash("Deposited ${} successfully with your {} credit card!".format(new_money, credit_card(int(cc_number))))
         return redirect("/")
 
     else:
