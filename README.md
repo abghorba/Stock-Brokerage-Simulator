@@ -2,7 +2,7 @@
 A stock emulator which lets you create an account that starts with $10,000 and lets you invest in stocks. You can get quotes on stocks, buy stocks, sell stocks, and view your history.
 
 <h2> Usage </h2>
-Go to stock-emulator.m4mvtr6c2m.us-west-1.elasticbeanstalk.com to begin using this app.
+Go to www.stock-emulator.m4mvtr6c2m.us-west-1.elasticbeanstalk.com to begin using this app.
 
 From here, navigate to the "Register" link in the top right corner and create an account.
 Your username and a hash of your password will be stored in a MySQL database. You start out with $10,000.
