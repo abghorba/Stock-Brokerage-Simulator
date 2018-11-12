@@ -11,29 +11,30 @@
                 <th>Symbol</th>
                 <th>Name</th>
                 <th>Shares</th>
-                <th>Price</th>
+                <th>Price Per Share</th>
                 <th>TOTAL</th>
             </tr>
         </thead>
         <tfoot align="left">
             <tr>
                 <td colspan="4"></td>
-                <td>{{ grand_total }}</td>
+                <td style="background-color: gold">{{ grand_total }}</td>
             </tr>
         </tfoot>
         <tbody align="left">
             {% for stock in stocks %}
                 <tr>
                     <td>{{ stock["symbol"] }}</td>
-                    <td>{{ stock["name"] }}</td>
+                    <td>{{ stock["name_"] }}</td>
                     <td>{{ stock["shares"] }}</td>
                     <td>${{ stock["price"] }}</td>
                     <td>${{ stock["total"] }}</td>
                 </tr>
             {% endfor %}
+            <tr style="background-color: lightgray">
                 <td>CASH</td>
-                <td colspan="3"></td>
-                <td>{{ user_cash }}</td>
+                <td colspan="3" ></td>
+                <td>${{ user_cash }}</td>
             </tr>
         </tbody>
     </table>
