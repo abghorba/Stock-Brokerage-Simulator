@@ -13,7 +13,7 @@ from helpers import apology, login_required, lookup, usd, credit_card
 
 # Configure application
 application = Flask(__name__)
-application.secret_key = '9\xa4)\xce\x0c\xc6\x9a\x7fi:*}\xd9\x9d\xd8\xe8\xba\x0b\xa3\xcb6X4\x8e'
+application.secret_key = SecretKey.SECRET_KEY
 
 # Ensure templates are auto-reloaded
 application.config["TEMPLATES_AUTO_RELOAD"] = True
@@ -32,10 +32,10 @@ application.jinja_env.filters["usd"] = usd
 
 # Connect to MySQL database
 db = mysql.connector.connect(
-    host='myfinance-db.cioldyovwirn.us-east-2.rds.amazonaws.com',
-    user='abghorba',
-    passwd='12345abcde!$',
-    database='finance',
+    host=MySQL_DB.DB_HOST,
+    user=MySQL_DB.DB_USER,
+    passwd=MySQL_DB.DB_PASSWORD,
+    database=MySQL_DB.DB_NAME,
 )
 cursor = db.cursor(dictionary=True)
 
