@@ -426,3 +426,7 @@ def errorhandler(e):
 # listen for errors
 for code in default_exceptions:
     application.errorhandler(code)(errorhandler)
+
+
+if __name__ == "__main__":
+    application.run()
