@@ -1,6 +1,7 @@
 import os
 import mysql.connector
 
+from config import SecretKey, MySQL_DB
 from decimal import Decimal
 from flask import Flask, flash, redirect, render_template, request, session
 from flask_session import Session
@@ -12,7 +13,7 @@ from helpers import apology, login_required, lookup, usd, credit_card
 
 # Configure application
 app = Flask(__name__)
-app.secret_key = SECRET_KEY
+app.secret_key = SecretKey.SECRET_KEY
 
 # Ensure templates are auto-reloaded
 app.config["TEMPLATES_AUTO_RELOAD"] = True
@@ -32,10 +33,10 @@ app.jinja_env.filters["usd"] = usd
 
 # Connect to MySQL database
 db = mysql.connector.connect(
-    host=DB_HOST,
-    user=DB_USER,
-    passwd=DB_PASSWORD,
-    database=DB_NAME,
+    host=MySQL_DB.DB_HOST,
+    user=MySQL_DB.DB_USER,
+    passwd=MySQL_DB.DB_PASSWORD,
+    database=MySQL_DB.DB_NAME,
 )
 cursor = db.cursor(dictionary=True)
 
