@@ -21,7 +21,11 @@
                     <td>{{ history["symbol"] }}</td>
                     <td>{{ history["transactions"] }}</td>
                     <td>${{ history["price"] }}</td>
-                    <td>${{ history["price"] * history["transactions"] }}</td>
+                    {% if history["price"] * history["transactions"] < 0 %}
+                        <td>-${{ -history["transactions"] * history["price"] }}</td>
+                    {% else %}
+                        <td>${{ history["transactions"] * history["price"] }}</td>
+                    {% endif %}
                     <td>{{ history["time_"] }}</td>
                 </tr>
             {% endfor %}
