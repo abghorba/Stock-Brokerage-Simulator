@@ -4,18 +4,18 @@ $(document).ready(function(){
 
 });
 
-
 function login() {
     var form = document.getElementById("login");
 
     form.onsubmit = function() {
-        if (!form.username.value)
-        {
+        var username = form.username.value;
+        var password = form.password.value;
+
+        if (!username) {
             alert("Missing username!");
             return false;
         }
-        else if (!form.password.value)
-        {
+        else if (!password) {
             alert("Missing password!");
             return false;
         }

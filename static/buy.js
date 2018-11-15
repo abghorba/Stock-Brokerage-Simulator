@@ -8,18 +8,18 @@ function buy() {
     var form = document.getElementById("buy");
 
     form.onsubmit = function() {
-        if (!form.symbol.value)
-        {
+        var symbol = form.symbol.value;
+        var shares = form.shares.value;
+
+        if (!symbol) {
             alert("Missing symbol!");
             return false;
         }
-        else if (!form.shares.value)
-        {
+        else if (!shares) {
             alert("Enter shares!");
             return false;
         }
-        else if(form.shares.value <= 0)
-        {
+        else if(shares <= 0) {
             alert("Shares must be a positive integer!");
             return false;
         }

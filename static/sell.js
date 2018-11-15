@@ -8,13 +8,14 @@ function sell() {
     var form = document.getElementById("sell");
 
     form.onsubmit = function() {
-        if(!form.symbol.value)
-        {
+        var symbol = form.symbol.value;
+        var shares = form.shares.value;
+
+        if(!symbol) {
             alert("Select symbol!");
             return false;
         }
-        if(!form.shares.value)
-        {
+        if(!shares) {
             alert("Enter shares!");
             return false;
         }
