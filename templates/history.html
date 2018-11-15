@@ -22,7 +22,7 @@
                     <td>{{ history["transactions"] }}</td>
                     <td>${{ history["price"] }}</td>
                     {% if history["price"] * history["transactions"] < 0 %}
-                        <td>-${{ -history["transactions"] * history["price"] }}</td>
+                        <td>${{ -history["transactions"] * history["price"] }}</td>
                     {% else %}
                         <td>${{ history["transactions"] * history["price"] }}</td>
                     {% endif %}

@@ -8,8 +8,9 @@ function quote() {
     var form = document.getElementById("quote");
 
     form.onsubmit = function() {
-        if(!form.symbol.value)
-        {
+        var symbol = form.symbol.value; 
+
+        if(!symbol) {
             alert("Missing symbol!");
             return false;
         }
