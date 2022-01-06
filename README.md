@@ -14,21 +14,9 @@ On "Buy" you type in the trading symbol of the company you wish to buy shares fr
 On "Sell" you may select from the shares you already have and sell shares. If you have the number of shares entered, then your shares will be sold and you will be redirected back to the portfolio where everything will be updated accordingly.
 
 On "History" you may see your transaction history, ordered by the time each transaction was completed.
-
-On "Deposit" you may add more money to your account by providing a valid credit card number (VISA, AMEX, or MASTERCARD only) and the amount you wish to deposit.
-Note: This may make the app redundant since you can add an arbitrary amount of money, so will add new features to provide a limit!
-
-On "Bank" you will see a COMING SOON! A bank account will become available with the following features:
- 
-    1) Depositing money into the bank with progressive interest rates
-    2) Withdrawing money
-    3) Limit the number of transaction you can do in a day
-    4) Updating your history to show bank transactions
-    5) 4-Digit PIN
-    6) Your very own Account Number!
     
 When finished you may exit the app, or go to "Log Out".
 
-If you ever forget your password, you can change it using your keyword!]
+If you ever forget your password, you can change it using your keyword!
 
 HAVE FUN!

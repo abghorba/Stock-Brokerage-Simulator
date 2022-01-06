@@ -1,7 +1,6 @@
-import os
 import mysql.connector
 
-from config import SecretKey, MySQL_DB
+from config import SECRET_KEY, MySQL_DB
 from decimal import Decimal
 from flask import Flask, flash, g, redirect, render_template, request, session
 from flask_session import Session
@@ -9,11 +8,11 @@ from tempfile import mkdtemp
 from werkzeug.exceptions import default_exceptions
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from helpers import apology, login_required, lookup, usd, credit_card
+from helpers import apology, login_required, lookup, usd
 
 # Configure application
 application = Flask(__name__)
-application.secret_key = SecretKey.SECRET_KEY
+application.secret_key = SECRET_KEY
 
 # Ensure templates are auto-reloaded
 application.config["TEMPLATES_AUTO_RELOAD"] = True
@@ -374,51 +373,6 @@ def history():
     user_history = cursor.fetchall()
 
     return render_template("history.html", histories=user_history)
-
-
-@application.route("/deposit", methods=["GET", "POST"])
-@login_required
-def deposit():
-    """Add more cash"""
-    db, cursor = open_database()
-
-    # User reached route via POST (as by submitting a form via POST)
-    if request.method == "POST":
-
-        new_money = request.form.get("new_money")
-        cc_number = request.form.get("credit_number")
-
-        # Ensure credit card number is valid
-        credit_card(int(cc_number))
-        if not cc_number or credit_card(int(cc_number)) == "INVALID":
-            return apology("Invalid credit card number")
-
-        # Add new money to user's available cash      
-        cursor.execute(
-            "UPDATE users SET cash=cash+%s WHERE id=%s",
-            (new_money, session["user_id"])
-        )
-        db.commit()
-
-        # Redirect user to home page
-        flash("Deposited ${} successfully with your {} credit card!".format(new_money, credit_card(int(cc_number))))
-        return redirect("/portfolio")
-
-    else:
-        return render_template("deposit.html")
-
-
-@application.route("/bank", methods=["GET", "POST"])
-@login_required
-def bank():
-    db, cursor = open_database()
-
-    # User reached route via POST (as by submitting a form via POST)
-    if request.method == "POST":
-        # TODO
-        return redirect("/portfolio")
-    else:
-        return render_template("bank.html")
 
 
 @application.route("/password-reset", methods=["GET", "POST"])
