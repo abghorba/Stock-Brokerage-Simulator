@@ -3,8 +3,6 @@ import mysql.connector
 from config import SECRET_KEY, MySQL_DB
 from decimal import Decimal
 from flask import Flask, flash, g, redirect, render_template, request, session
-from flask_session import Session
-from tempfile import mkdtemp
 from werkzeug.exceptions import default_exceptions
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -74,6 +72,8 @@ def login():
 
         # Remember which user has logged in
         session["user_id"] = row["id"]
+        print(row["id"])
+        print(session["user_id"])
 
         # Redirect user to home page
         flash("Login successful!")
@@ -99,7 +99,8 @@ def register():
                     (request.form.get("username"), generate_password_hash(request.form.get("password")), request.form.get("keyword"))
             )
             db.commit()
-        except:
+        except Exception as e:
+            print(e)
             return apology("Username already exists")
 
         # Remember which user has logged in
