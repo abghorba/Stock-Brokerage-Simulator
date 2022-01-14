@@ -23,28 +23,31 @@ def after_request(response):
     response.headers["Pragma"] = "no-cache"
     return response
 
+
 # Custom filter
 application.jinja_env.filters["usd"] = usd
 
 # Parameters for MySQL database
 params = {
-    'host': MySQL_DB.DB_HOST,
-    'user': MySQL_DB.DB_USER,
-    'passwd': MySQL_DB.DB_PASSWORD,
-    'database': MySQL_DB.DB_NAME,
+    "host": MySQL_DB.DB_HOST,
+    "user": MySQL_DB.DB_USER,
+    "passwd": MySQL_DB.DB_PASSWORD,
+    "database": MySQL_DB.DB_NAME,
 }
+
 
 def open_database():
     """Opens a new database connection if there is none yet"""
-    if not hasattr(g, 'db'):
+    if not hasattr(g, "db"):
         g.db = mysql.connector.connect(**params)
         g.cursor = g.db.cursor(dictionary=True)
     return g.db, g.cursor
 
+
 @application.teardown_appcontext
 def close_database(error):
     """Closes the database connection at the end of the request"""
-    if hasattr(g, 'db'):
+    if hasattr(g, "db"):
         g.db.close()
 
 
@@ -55,19 +58,20 @@ def login():
 
     # Forget any user_id
     session.clear()
-    
+
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
 
         # Query database for username
         cursor.execute(
-            "SELECT * FROM users WHERE username=%s",
-            (request.form.get("username"),)
+            "SELECT * FROM users WHERE username=%s", (request.form.get("username"),)
         )
         row = cursor.fetchone()
 
         # Ensure username exists and password is correct
-        if not row or not check_password_hash(row["hash_"], request.form.get("password")):
+        if not row or not check_password_hash(
+            row["hash_"], request.form.get("password")
+        ):
             return apology("invalid username and/or password", 403)
 
         # Remember which user has logged in
@@ -96,7 +100,11 @@ def register():
         try:
             cursor.execute(
                 "INSERT INTO users (username, hash_, keyword) VALUES (%s, %s, %s)",
-                    (request.form.get("username"), generate_password_hash(request.form.get("password")), request.form.get("keyword"))
+                (
+                    request.form.get("username"),
+                    generate_password_hash(request.form.get("password")),
+                    request.form.get("keyword"),
+                ),
             )
             db.commit()
         except Exception as e:
@@ -145,16 +153,13 @@ def portfolio():
         total_price = stock_shares * share_price
         stock_holdings += total_price
         cursor.execute(
-            "UPDATE portfolio SET price=%s, total=%s WHERE id=%s AND symbol=%s", 
-            (share_price, total_price, session["user_id"], stock_symbol)
+            "UPDATE portfolio SET price=%s, total=%s WHERE id=%s AND symbol=%s",
+            (share_price, total_price, session["user_id"], stock_symbol),
         )
         db.commit()
 
     # Get user's available cash
-    cursor.execute(
-        "SELECT cash FROM users WHERE id=%s", 
-        (session["user_id"],)
-    )
+    cursor.execute("SELECT cash FROM users WHERE id=%s", (session["user_id"],))
     available_cash = cursor.fetchone()
 
     # Add user's available cash to total holdings
@@ -162,22 +167,20 @@ def portfolio():
 
     # If shares are equal to 0 then delete from portfolio
     cursor.execute(
-        "DELETE FROM portfolio WHERE id=%s AND shares=0", 
-        (session["user_id"],)
+        "DELETE FROM portfolio WHERE id=%s AND shares=0", (session["user_id"],)
     )
 
     # Get current portfolio
     cursor.execute(
-        "SELECT * FROM portfolio WHERE id=%s ORDER BY symbol", 
-        (session["user_id"],)
+        "SELECT * FROM portfolio WHERE id=%s ORDER BY symbol", (session["user_id"],)
     )
     current_portfolio = cursor.fetchall()
 
     return render_template(
-        "portfolio.html", 
-        stocks=current_portfolio, 
-        user_cash=usd(available_cash["cash"]), 
-        grand_total=usd(grand_total)
+        "portfolio.html",
+        stocks=current_portfolio,
+        user_cash=usd(available_cash["cash"]),
+        grand_total=usd(grand_total),
     )
 
 
@@ -197,7 +200,9 @@ def quote():
             return apology("invalid symbol")
 
         # Show user stock information
-        return render_template("quoted.html", stock=stock_info, price=usd(stock_info["price"]))
+        return render_template(
+            "quoted.html", stock=stock_info, price=usd(stock_info["price"])
+        )
 
     # User reached route via GET (as by clicking a link or via redirect)
     else:
@@ -228,10 +233,7 @@ def buy():
         share_price = float(stock_info["price"])
 
         # Get user's cash
-        cursor.execute(
-            "SELECT cash FROM users WHERE id=%s", 
-            (session["user_id"],)
-        )
+        cursor.execute("SELECT cash FROM users WHERE id=%s", (session["user_id"],))
         available_cash = cursor.fetchone()
 
         # Variable for the total purchase price
@@ -243,15 +245,15 @@ def buy():
 
         # Update user's history
         cursor.execute(
-            "INSERT INTO history (id, symbol, transactions, price) VALUES (%s, %s, %s, %s)", 
-            (session["user_id"], symbol_buying, shares_buying, share_price)
+            "INSERT INTO history (id, symbol, transactions, price) VALUES (%s, %s, %s, %s)",
+            (session["user_id"], symbol_buying, shares_buying, share_price),
         )
         db.commit()
 
         # Check if user already owns shares from a company
         cursor.execute(
-            "SELECT shares FROM portfolio WHERE id=%s AND symbol=%s", 
-             (session["user_id"], symbol_buying)
+            "SELECT shares FROM portfolio WHERE id=%s AND symbol=%s",
+            (session["user_id"], symbol_buying),
         )
         has_shares = cursor.fetchall()
 
@@ -260,27 +262,38 @@ def buy():
             cursor.execute(
                 "INSERT INTO portfolio (id, symbol, name_, shares, price, total) \
                 VALUES (%s, %s, %s, %s, %s, %s)",
-                (session["user_id"], symbol_buying, stock_info["name"], shares_buying, share_price, purchase_price)
+                (
+                    session["user_id"],
+                    symbol_buying,
+                    stock_info["name"],
+                    shares_buying,
+                    share_price,
+                    purchase_price,
+                ),
             )
             db.commit()
-                
+
         # If user does have shares from the company, update portfolio
         else:
             cursor.execute(
-                "UPDATE portfolio SET shares=shares+%s WHERE id=%s", 
-                (shares_buying, session["user_id"])
+                "UPDATE portfolio SET shares=shares+%s WHERE id=%s",
+                (shares_buying, session["user_id"]),
             )
             db.commit()
 
         # Update user's available cash
         cursor.execute(
-            "UPDATE users SET cash=cash-%s WHERE id=%s", 
-            (purchase_price, session["user_id"])
+            "UPDATE users SET cash=cash-%s WHERE id=%s",
+            (purchase_price, session["user_id"]),
         )
         db.commit()
 
         # Redirect user to home page
-        flash("Bought {} share(s) of {} successfully!".format(shares_buying, symbol_buying))
+        flash(
+            "Bought {} share(s) of {} successfully!".format(
+                shares_buying, symbol_buying
+            )
+        )
         return redirect("/portfolio")
 
     # User reached route via GET (as by clicking a link or via redirect)
@@ -295,10 +308,7 @@ def sell():
     db, cursor = open_database()
 
     # Query database for user's stocks
-    cursor.execute(
-        "SELECT * FROM portfolio WHERE id=%s", 
-        (session["user_id"],)
-    )
+    cursor.execute("SELECT * FROM portfolio WHERE id=%s", (session["user_id"],))
     user_stocks = cursor.fetchall()
 
     # User reached route via POST (as by submitting a form via POST)
@@ -316,7 +326,7 @@ def sell():
         # Get number of shares user owns
         cursor.execute(
             "SELECT shares FROM portfolio WHERE id=%s AND symbol=%s",
-            (session["user_id"], symbol_selling)
+            (session["user_id"], symbol_selling),
         )
         user_shares = cursor.fetchone()
 
@@ -333,26 +343,30 @@ def sell():
         # Update user's history to show a sell transaction
         cursor.execute(
             "INSERT INTO history (id, symbol, transactions, price) VALUES (%s, %s, %s, %s)",
-            (session["user_id"], symbol_selling, -shares_selling, share_price)
+            (session["user_id"], symbol_selling, -shares_selling, share_price),
         )
         db.commit()
 
         # Update user's portfolio by deleting shares sold
         cursor.execute(
             "UPDATE portfolio SET shares=shares-%s, total=total-%s WHERE id=%s AND symbol=%s",
-            (shares_selling, sale_price, session["user_id"], symbol_selling)
+            (shares_selling, sale_price, session["user_id"], symbol_selling),
         )
         db.commit()
 
         # Update user's available cash
         cursor.execute(
             "UPDATE users SET cash=cash+%s WHERE id=%s",
-            (sale_price, session["user_id"])
+            (sale_price, session["user_id"]),
         )
         db.commit()
 
         # Redirect user to home page
-        flash("Sold {} share(s) of {} successfully!".format(shares_selling, symbol_selling))
+        flash(
+            "Sold {} share(s) of {} successfully!".format(
+                shares_selling, symbol_selling
+            )
+        )
         return redirect("/portfolio")
 
     # User reached route via GET (as by clicking a link or via redirect)
@@ -368,8 +382,7 @@ def history():
 
     # Get user's history
     cursor.execute(
-        "SELECT * FROM history WHERE id=%s ORDER BY time_", 
-        (session["user_id"],) 
+        "SELECT * FROM history WHERE id=%s ORDER BY time_", (session["user_id"],)
     )
     user_history = cursor.fetchall()
 
@@ -384,10 +397,10 @@ def passwordreset():
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
 
-        # Query database for username and keyword       
+        # Query database for username and keyword
         cursor.execute(
             "SELECT * FROM users WHERE username=%s AND keyword=%s",
-            (request.form.get("username"), request.form.get("keyword"))
+            (request.form.get("username"), request.form.get("keyword")),
         )
 
         # Ensure username/keyword combination exists
@@ -397,7 +410,10 @@ def passwordreset():
         # Update user's new password
         cursor.execute(
             "UPDATE users SET hash_=%s WHERE username=%s",
-            (generate_password_hash(request.form.get("new_password")), request.form.get("username"))
+            (
+                generate_password_hash(request.form.get("new_password")),
+                request.form.get("username"),
+            ),
         )
         db.commit()
 
@@ -416,6 +432,7 @@ def resetsuccess():
 def errorhandler(e):
     """Handle error"""
     return apology(e.name, e.code)
+
 
 # listen for errors
 for code in default_exceptions:
