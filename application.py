@@ -54,15 +54,14 @@ def close_database(error):
 @application.route("/", methods=["GET", "POST"])
 def login():
     """Log user in"""
-    db, cursor = open_database()
 
     # Forget any user_id
     session.clear()
 
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
-
         # Query database for username
+        db, cursor = open_database()
         cursor.execute(
             "SELECT * FROM users WHERE username=%s", (request.form.get("username"),)
         )
@@ -91,13 +90,13 @@ def login():
 @application.route("/register", methods=["GET", "POST"])
 def register():
     """Register user"""
-    db, cursor = open_database()
 
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
 
         # Add registered user into database
         try:
+            db, cursor = open_database()
             cursor.execute(
                 "INSERT INTO users (username, hash_, keyword) VALUES (%s, %s, %s)",
                 (
@@ -134,41 +133,86 @@ def logout():
     return redirect("/")
 
 
+@application.route("/password-reset", methods=["GET", "POST"])
+def password_reset():
+    """Allow users to reset password"""
+    db, cursor = open_database()
+
+    # User reached route via POST (as by submitting a form via POST)
+    if request.method == "POST":
+
+        # Query database for username and keyword
+        cursor.execute(
+            "SELECT * FROM users WHERE username=%s AND keyword=%s",
+            (request.form.get("username"), request.form.get("keyword")),
+        )
+
+        # Ensure username/keyword combination exists
+        if not cursor.fetchone():
+            return apology("Username/Keyword combination invalid")
+
+        # Update user's new password
+        cursor.execute(
+            "UPDATE users SET hash_=%s WHERE username=%s",
+            (
+                generate_password_hash(request.form.get("new_password")),
+                request.form.get("username"),
+            ),
+        )
+        db.commit()
+
+        # Redirect user to success landing page
+        return redirect("/password-reset-success")
+
+    else:
+        return render_template("password-reset.html")
+
+
+@application.route("/password-reset-success")
+def reset_success():
+    return render_template("password-reset-success.html")
+
+
 @application.route("/portfolio")
 @login_required
 def portfolio():
     """Shows user's portfolio"""
     db, cursor = open_database()
-    cursor.execute("SELECT * FROM portfolio WHERE id=%s", (session["user_id"],))
+    cursor.execute(
+        "SELECT * FROM portfolio WHERE id=%s", (session["user_id"],),
+    )
     user_stocks = cursor.fetchall()
 
-    stock_holdings = 0
+    total_stock_value = 0
 
     # Get current prices and update portfolio
     for stock in user_stocks:
         stock_symbol = stock["symbol"]
-        stock_shares = stock["shares"]
+        owned_shares = stock["shares"]
         stock_info = lookup(stock_symbol)
-        share_price = stock_info["price"]
-        total_price = stock_shares * share_price
-        stock_holdings += total_price
+        market_price_per_share = float(stock_info["price"])
+        total_market_price = owned_shares * market_price_per_share
+        total_stock_value += total_market_price
         cursor.execute(
             "UPDATE portfolio SET price=%s, total=%s WHERE id=%s AND symbol=%s",
-            (share_price, total_price, session["user_id"], stock_symbol),
+            (market_price_per_share, total_market_price, session["user_id"], stock_symbol)
         )
         db.commit()
-
-    # Get user's available cash
-    cursor.execute("SELECT cash FROM users WHERE id=%s", (session["user_id"],))
-    available_cash = cursor.fetchone()
-
-    # Add user's available cash to total holdings
-    grand_total = available_cash["cash"] + Decimal(stock_holdings)
 
     # If shares are equal to 0 then delete from portfolio
     cursor.execute(
         "DELETE FROM portfolio WHERE id=%s AND shares=0", (session["user_id"],)
     )
+    db.commit()
+
+    # Get user's available cash
+    cursor.execute(
+        "SELECT cash FROM users WHERE id=%s", (session["user_id"],)
+    )
+    available_cash = cursor.fetchone()
+
+    # Add user's available cash to total holdings
+    total_portfolio_value = available_cash["cash"] + Decimal(total_stock_value)
 
     # Get current portfolio
     cursor.execute(
@@ -180,7 +224,7 @@ def portfolio():
         "portfolio.html",
         stocks=current_portfolio,
         user_cash=usd(available_cash["cash"]),
-        grand_total=usd(grand_total),
+        grand_total=usd(total_portfolio_value),
     )
 
 
@@ -213,10 +257,10 @@ def quote():
 @login_required
 def buy():
     """Buy shares of stock"""
-    db, cursor = open_database()
 
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
+        db, cursor = open_database()
         shares_buying = int(request.form.get("shares"))
 
         # Look up stock information
@@ -257,8 +301,16 @@ def buy():
         )
         has_shares = cursor.fetchall()
 
-        # If user doesn't have shares from a company, insert into portfolio
-        if not has_shares:
+        # If user already has shares from the company, update portfolio
+        if has_shares:
+            cursor.execute(
+                "UPDATE portfolio SET shares=shares+%s WHERE id=%s",
+                (shares_buying, session["user_id"]),
+            )
+            db.commit()
+
+        # If user doesn't have shares from the company, insert into portfolio
+        else:
             cursor.execute(
                 "INSERT INTO portfolio (id, symbol, name_, shares, price, total) \
                 VALUES (%s, %s, %s, %s, %s, %s)",
@@ -270,14 +322,6 @@ def buy():
                     share_price,
                     purchase_price,
                 ),
-            )
-            db.commit()
-
-        # If user does have shares from the company, update portfolio
-        else:
-            cursor.execute(
-                "UPDATE portfolio SET shares=shares+%s WHERE id=%s",
-                (shares_buying, session["user_id"]),
             )
             db.commit()
 
@@ -308,7 +352,9 @@ def sell():
     db, cursor = open_database()
 
     # Query database for user's stocks
-    cursor.execute("SELECT * FROM portfolio WHERE id=%s", (session["user_id"],))
+    cursor.execute(
+        "SELECT * FROM portfolio WHERE id=%s", (session["user_id"],)
+    )
     user_stocks = cursor.fetchall()
 
     # User reached route via POST (as by submitting a form via POST)
@@ -326,7 +372,7 @@ def sell():
         # Get number of shares user owns
         cursor.execute(
             "SELECT shares FROM portfolio WHERE id=%s AND symbol=%s",
-            (session["user_id"], symbol_selling),
+            (session["user_id"], symbol_selling)
         )
         user_shares = cursor.fetchone()
 
@@ -387,46 +433,6 @@ def history():
     user_history = cursor.fetchall()
 
     return render_template("history.html", histories=user_history)
-
-
-@application.route("/password-reset", methods=["GET", "POST"])
-def passwordreset():
-    """Allow users to reset password"""
-    db, cursor = open_database()
-
-    # User reached route via POST (as by submitting a form via POST)
-    if request.method == "POST":
-
-        # Query database for username and keyword
-        cursor.execute(
-            "SELECT * FROM users WHERE username=%s AND keyword=%s",
-            (request.form.get("username"), request.form.get("keyword")),
-        )
-
-        # Ensure username/keyword combination exists
-        if not cursor.fetchone():
-            return apology("Username/Keyword combination invalid")
-
-        # Update user's new password
-        cursor.execute(
-            "UPDATE users SET hash_=%s WHERE username=%s",
-            (
-                generate_password_hash(request.form.get("new_password")),
-                request.form.get("username"),
-            ),
-        )
-        db.commit()
-
-        # Redirect user to success landing page
-        return redirect("/password-reset-success")
-
-    else:
-        return render_template("password-reset.html")
-
-
-@application.route("/password-reset-success")
-def resetsuccess():
-    return render_template("password-reset-success.html")
 
 
 def errorhandler(e):
