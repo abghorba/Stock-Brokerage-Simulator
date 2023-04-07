@@ -1,4 +1,4 @@
-# Stock-Emulator
+# Stock-Brokerage-Simulator
 A stock trading application which lets you create an account that starts with $10,000 and lets you invest in stocks. You can get quotes on stocks, buy stocks, sell stocks, and view your history.
 
 <h2> Video Demo </h2>
