@@ -1,11 +1,11 @@
-import mysql.connector
-
-from config import SECRET_KEY, MySQL_DB
 from decimal import Decimal
+
+import mysql.connector
 from flask import Flask, flash, g, redirect, render_template, request, session
 from werkzeug.exceptions import default_exceptions
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from config import SECRET_KEY, MySQL_DB
 from helpers import apology, login_required, lookup, usd
 
 # Configure application
@@ -14,6 +14,7 @@ application.secret_key = SECRET_KEY
 
 # Ensure templates are auto-reloaded
 application.config["TEMPLATES_AUTO_RELOAD"] = True
+
 
 # Ensure responses aren't cached
 @application.after_request
@@ -93,7 +94,6 @@ def register():
 
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
-
         # Add registered user into database
         try:
             db, cursor = open_database()
@@ -140,7 +140,6 @@ def password_reset():
 
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
-
         # Query database for username and keyword
         cursor.execute(
             "SELECT * FROM users WHERE username=%s AND keyword=%s",
@@ -179,7 +178,8 @@ def portfolio():
     """Shows user's portfolio"""
     db, cursor = open_database()
     cursor.execute(
-        "SELECT * FROM portfolio WHERE id=%s", (session["user_id"],),
+        "SELECT * FROM portfolio WHERE id=%s",
+        (session["user_id"],),
     )
     user_stocks = cursor.fetchall()
 
@@ -195,7 +195,12 @@ def portfolio():
         total_stock_value += total_market_price
         cursor.execute(
             "UPDATE portfolio SET price=%s, total=%s WHERE id=%s AND symbol=%s",
-            (market_price_per_share, total_market_price, session["user_id"], stock_symbol)
+            (
+                market_price_per_share,
+                total_market_price,
+                session["user_id"],
+                stock_symbol,
+            ),
         )
         db.commit()
 
@@ -206,9 +211,7 @@ def portfolio():
     db.commit()
 
     # Get user's available cash
-    cursor.execute(
-        "SELECT cash FROM users WHERE id=%s", (session["user_id"],)
-    )
+    cursor.execute("SELECT cash FROM users WHERE id=%s", (session["user_id"],))
     available_cash = cursor.fetchone()
 
     # Add user's available cash to total holdings
@@ -235,7 +238,6 @@ def quote():
 
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
-
         # Look up stock information
         stock_info = lookup(request.form.get("symbol"))
 
@@ -352,14 +354,11 @@ def sell():
     db, cursor = open_database()
 
     # Query database for user's stocks
-    cursor.execute(
-        "SELECT * FROM portfolio WHERE id=%s", (session["user_id"],)
-    )
+    cursor.execute("SELECT * FROM portfolio WHERE id=%s", (session["user_id"],))
     user_stocks = cursor.fetchall()
 
     # User reached route via POST (as by submitting a form via POST)
     if request.method == "POST":
-
         # Look up stock information
         stock_info = lookup(request.form.get("symbol"))
 
@@ -372,7 +371,7 @@ def sell():
         # Get number of shares user owns
         cursor.execute(
             "SELECT shares FROM portfolio WHERE id=%s AND symbol=%s",
-            (session["user_id"], symbol_selling)
+            (session["user_id"], symbol_selling),
         )
         user_shares = cursor.fetchone()
 
