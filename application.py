@@ -1,11 +1,11 @@
 from decimal import Decimal
 
 import mysql.connector
+from config import SECRET_KEY, MySQL_DB
 from flask import Flask, flash, g, redirect, render_template, request, session
 from werkzeug.exceptions import default_exceptions
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from config import SECRET_KEY, MySQL_DB
 from helpers import apology, login_required, lookup, usd
 
 # Configure application
@@ -63,15 +63,11 @@ def login():
     if request.method == "POST":
         # Query database for username
         db, cursor = open_database()
-        cursor.execute(
-            "SELECT * FROM users WHERE username=%s", (request.form.get("username"),)
-        )
+        cursor.execute("SELECT * FROM users WHERE username=%s", (request.form.get("username"),))
         row = cursor.fetchone()
 
         # Ensure username exists and password is correct
-        if not row or not check_password_hash(
-            row["hash_"], request.form.get("password")
-        ):
+        if not row or not check_password_hash(row["hash_"], request.form.get("password")):
             return apology("invalid username and/or password", 403)
 
         # Remember which user has logged in
@@ -205,9 +201,7 @@ def portfolio():
         db.commit()
 
     # If shares are equal to 0 then delete from portfolio
-    cursor.execute(
-        "DELETE FROM portfolio WHERE id=%s AND shares=0", (session["user_id"],)
-    )
+    cursor.execute("DELETE FROM portfolio WHERE id=%s AND shares=0", (session["user_id"],))
     db.commit()
 
     # Get user's available cash
@@ -218,9 +212,7 @@ def portfolio():
     total_portfolio_value = available_cash["cash"] + Decimal(total_stock_value)
 
     # Get current portfolio
-    cursor.execute(
-        "SELECT * FROM portfolio WHERE id=%s ORDER BY symbol", (session["user_id"],)
-    )
+    cursor.execute("SELECT * FROM portfolio WHERE id=%s ORDER BY symbol", (session["user_id"],))
     current_portfolio = cursor.fetchall()
 
     return render_template(
@@ -246,9 +238,7 @@ def quote():
             return apology("invalid symbol")
 
         # Show user stock information
-        return render_template(
-            "quoted.html", stock=stock_info, price=usd(stock_info["price"])
-        )
+        return render_template("quoted.html", stock=stock_info, price=usd(stock_info["price"]))
 
     # User reached route via GET (as by clicking a link or via redirect)
     else:
@@ -335,11 +325,7 @@ def buy():
         db.commit()
 
         # Redirect user to home page
-        flash(
-            "Bought {} share(s) of {} successfully!".format(
-                shares_buying, symbol_buying
-            )
-        )
+        flash("Bought {} share(s) of {} successfully!".format(shares_buying, symbol_buying))
         return redirect("/portfolio")
 
     # User reached route via GET (as by clicking a link or via redirect)
@@ -407,11 +393,7 @@ def sell():
         db.commit()
 
         # Redirect user to home page
-        flash(
-            "Sold {} share(s) of {} successfully!".format(
-                shares_selling, symbol_selling
-            )
-        )
+        flash("Sold {} share(s) of {} successfully!".format(shares_selling, symbol_selling))
         return redirect("/portfolio")
 
     # User reached route via GET (as by clicking a link or via redirect)
@@ -426,9 +408,7 @@ def history():
     db, cursor = open_database()
 
     # Get user's history
-    cursor.execute(
-        "SELECT * FROM history WHERE id=%s ORDER BY time_", (session["user_id"],)
-    )
+    cursor.execute("SELECT * FROM history WHERE id=%s ORDER BY time_", (session["user_id"],))
     user_history = cursor.fetchall()
 
     return render_template("history.html", histories=user_history)
